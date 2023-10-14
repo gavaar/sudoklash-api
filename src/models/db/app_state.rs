@@ -1,7 +1,7 @@
 // dbwork: use a real database
 use std::sync::{Arc, Mutex};
 
-use crate::{config::Environment, models::User};
+use crate::{models::User, environment::Environment};
 
 pub struct AppState {
   pub db: Arc<Mutex<Vec<User>>>,

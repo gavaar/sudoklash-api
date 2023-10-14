@@ -1,4 +1,15 @@
-// todo: move this from here
+
+pub fn init_logger() -> () {
+  use dotenv::dotenv;
+
+  if std::env::var_os("RUST_LOG").is_none() {
+    std::env::set_var("RUST_LOG", "actix_web=info");
+  }
+  dotenv().ok();
+
+  env_logger::init();
+}
+
 #[derive(Debug, Clone)]
 pub struct Environment {
   pub client_origin: String,
@@ -9,9 +20,10 @@ pub struct Environment {
   pub google_oauth_client_secret: String,
   pub google_oauth_redirect_url: String,
 }
-
 impl Environment {
   pub fn init() -> Environment {
+    init_logger();
+
     let client_origin = std::env::var("CLIENT_ORIGIN").expect("CLIENT_ORIGIN must be set");
     let jwt_secret = std::env::var("JWT_SECRET").expect("JWT_SECRET must be set");
     let jwt_expires_in =

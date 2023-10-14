@@ -8,6 +8,6 @@ pub struct TokenClaims {
 }
 
 #[derive(Debug, Deserialize)]
-pub struct QueryCode {
+pub struct GoogleUserQuery {
   pub code: String,
 }

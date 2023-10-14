@@ -3,10 +3,14 @@ use reqwest::Client;
 
 use crate::models::{AppState, OAuthResponse, ErrorResponse};
 
-pub async fn request_access_token(
+pub async fn request(
   authorization_code: &str,
   data: &web::Data<AppState>,
 ) -> Result<OAuthResponse, ErrorResponse> {
+  if authorization_code.is_empty() {
+    return Err(ErrorResponse::Unauthorized("Code to request token was invalid or empty".to_string()));
+  }
+
   let redirect_url = data.env.google_oauth_redirect_url.to_owned();
   let client_secret = data.env.google_oauth_client_secret.to_owned();
   let client_id = data.env.google_oauth_client_id.to_owned();

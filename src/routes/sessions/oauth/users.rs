@@ -2,7 +2,7 @@ use reqwest::{Client, Url};
 
 use crate::models::{ErrorResponse, GoogleUserResult};
 
-pub async fn user_info(access_token: &str, id_token: &str) -> Result<GoogleUserResult, ErrorResponse> {
+pub async fn info(access_token: &str, id_token: &str) -> Result<GoogleUserResult, ErrorResponse> {
   let client = Client::new();
 
   let mut url = Url::parse("https://www.googleapis.com/oauth2/v1/userinfo").unwrap();
