@@ -12,7 +12,7 @@ struct ErrorBody {
 
 #[derive(Debug)]
 pub enum ErrorResponse {
-  // NotFound(String),
+  NotFound(String),
   Unauthorized(String),
   BadGateway(String),
 }
@@ -20,7 +20,7 @@ impl ErrorResponse {
   fn error_builder(&self) -> (u16, HttpResponseBuilder, String) {
     match self {
       ErrorResponse::Unauthorized(message) => (401, HttpResponse::Unauthorized(), message.to_owned()),
-      // ErrorResponse::NotFound(message) => (404, HttpResponse::NotFound(), message.to_owned()),
+      ErrorResponse::NotFound(message) => (404, HttpResponse::NotFound(), message.to_owned()),
       ErrorResponse::BadGateway(message) => (502, HttpResponse::BadGateway(), message.to_owned()),
     }
   }

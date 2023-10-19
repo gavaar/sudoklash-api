@@ -1,5 +1,8 @@
 use actix_web::{get, web, Responder, HttpResponse};
-use crate::models::{AppState, OAuthResponse, GoogleUserQuery};
+use crate::{
+  db::AppState,
+  models::{OAuthResponse, GoogleUserQuery},
+};
 
 mod users;
 mod access_token;

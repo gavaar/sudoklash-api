@@ -3,7 +3,7 @@ use chrono::Utc;
 use serde::Deserialize;
 use uuid::Uuid;
 
-use super::User;
+use crate::models::User;
 
 #[derive(Deserialize)]
 pub struct GoogleUserResult {

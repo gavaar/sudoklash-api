@@ -4,18 +4,16 @@ use actix_web::http::header;
 use actix_web::middleware::Logger;
 use actix_web::{App, HttpServer, web};
 
+mod db;
 mod environment;
 mod guards;
 mod models;
 mod routes;
 
-use models::AppState;
-
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    let db = AppState::init();
+    let db = db::AppState::init();
     let app_data = web::Data::new(db);
-    let public_dir = std::env::current_dir().unwrap().join("public");
 
     println!("\n\n🚀 Server started successfully");
 
@@ -32,7 +30,6 @@ async fn main() -> std::io::Result<()> {
 
         App::new()
             .app_data(app_data.clone())
-            .service(actix_files::Files::new("/v1/images", &public_dir))
             .configure(routes::init)
             .wrap(cors)
             .wrap(Logger::default())

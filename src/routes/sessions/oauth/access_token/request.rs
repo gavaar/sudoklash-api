@@ -1,7 +1,10 @@
 use actix_web::web;
 use reqwest::Client;
 
-use crate::models::{AppState, OAuthResponse, ErrorResponse};
+use crate::{
+  models::{OAuthResponse, ErrorResponse},
+  db::AppState,
+};
 
 pub async fn request(
   authorization_code: &str,

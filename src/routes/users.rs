@@ -1,6 +1,6 @@
 use actix_web::{get, web, HttpResponse, Responder};
 
-use crate::models::AppState;
+use crate::db::AppState;
 use crate::guards::AuthenticationGuard;
 
 #[get("/users/me")]
