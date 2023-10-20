@@ -10,7 +10,7 @@ mod access_token;
 //https://accounts.google.com/o/oauth2/auth?scope=https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email&response_type=code&access_type=offline&redirect_uri=http://localhost:8000/v1/sessions/oauth/google&client_id=921222346302-33pgvo300556qde30v87ot2gqmeikp87.apps.googleusercontent.com
 #[get("/oauth/google")]
 pub async fn google(query: web::Query<GoogleUserQuery>, data: web::Data<AppState>) -> impl Responder {
-  let token_response: OAuthResponse = match access_token::request(&query.code, &data).await {
+  let token_response: OAuthResponse = match access_token::request(&query.code, &data.env).await {
     Ok(token) => token,
     Err(error) => return error.throw(),
   };

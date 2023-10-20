@@ -4,9 +4,7 @@ use actix::prelude::*;
 use actix_web_actors::ws;
 use uuid::Uuid;
 
-use crate::models::{Room, UserConnect, UserDisconnect};
-
-use super::WsMessage;
+use crate::models::{Room, UserConnect, UserDisconnect, WsMessage};
 
 const HEARTBEAT_INTERVAL: Duration = Duration::from_secs(5);
 const CLIENT_TIMEOUT: Duration = Duration::from_secs(10);
@@ -92,7 +90,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for UserSocket {
         self.hb = Instant::now();
       }
       ws::Message::Text(text) => {
-        ctx.text(format!("{}: {}", self.user_id, text));
+        let _ = self.room_addr.do_send(WsMessage(format!("{}: {}", self.user_id, text)));
       }
       ws::Message::Binary(bin) => ctx.binary(bin),
       ws::Message::Close(reason) => {

@@ -1,22 +1,21 @@
-use actix_web::web;
 use reqwest::Client;
 
 use crate::{
   models::{OAuthResponse, ErrorResponse},
-  db::AppState,
+  environment::Environment,
 };
 
 pub async fn request(
   authorization_code: &str,
-  data: &web::Data<AppState>,
+  environment: &Environment,
 ) -> Result<OAuthResponse, ErrorResponse> {
   if authorization_code.is_empty() {
     return Err(ErrorResponse::Unauthorized("Code to request token was invalid or empty".to_string()));
   }
 
-  let redirect_url = data.env.google_oauth_redirect_url.to_owned();
-  let client_secret = data.env.google_oauth_client_secret.to_owned();
-  let client_id = data.env.google_oauth_client_id.to_owned();
+  let redirect_url = environment.google_oauth_redirect_url.to_owned();
+  let client_secret = environment.google_oauth_client_secret.to_owned();
+  let client_id = environment.google_oauth_client_id.to_owned();
   let root_url = "https://oauth2.googleapis.com/token";
   let client = Client::new();
 
