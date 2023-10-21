@@ -1,29 +1,31 @@
 use std::time::{Instant, Duration};
 
 use actix::prelude::*;
-use actix_web_actors::ws;
+use actix_web_actors::ws::{WebsocketContext, self};
 use uuid::Uuid;
 
-use crate::models::{
-  Room,
-  messages::{UserConnect, UserDisconnect, ServerChat, UserChat}
-};
+use super::{messages::{PlayerConnect, Player, UserConnect, Tick, UserDisconnect}, Room, turn::Turn};
 
 const HEARTBEAT_INTERVAL: Duration = Duration::from_secs(5);
 const CLIENT_TIMEOUT: Duration = Duration::from_secs(10);
 
-pub struct UserSocket {
+// separate game (state) from gamers (socket)
+pub struct GameSocket {
   user_id: Uuid,
-  hb: Instant,
   room_addr: Addr<Room>,
+  hb: Instant,
 }
 
-impl UserSocket {
-  pub fn new(user_id: Uuid, room_addr: Addr<Room>) -> UserSocket {
-    UserSocket { user_id, hb: Instant::now(), room_addr }
+impl GameSocket {
+  pub fn new(user_id: Uuid, room_addr: Addr<Room>) -> GameSocket {
+    GameSocket {
+      user_id,
+      room_addr,
+      hb: Instant::now(),
+    }
   }
 
-  // logic duplicated in game_socket. Extract?
+  // logic duplicated in user_socket. Extract?
   pub fn hb(&self, ctx: &mut ws::WebsocketContext<Self>) {
     ctx.run_interval(HEARTBEAT_INTERVAL, |act, ctx| {
       if Instant::now().duration_since(act.hb) > CLIENT_TIMEOUT {
@@ -39,8 +41,8 @@ impl UserSocket {
   }
 }
 
-impl Actor for UserSocket {
-  type Context = ws::WebsocketContext<Self>;
+impl Actor for GameSocket {
+  type Context = WebsocketContext<Self>;
 
   fn started(&mut self, ctx: &mut Self::Context) {
     self.hb(ctx);
@@ -60,23 +62,26 @@ impl Actor for UserSocket {
       })
       .wait(ctx);
   }
-
-  fn stopping(&mut self, _: &mut Self::Context) -> actix::Running {
-    self.room_addr.do_send(UserDisconnect { user_id: self.user_id });
-    Running::Stop
-  }
 }
 
-impl Handler<ServerChat> for UserSocket {
+impl Handler<Tick> for GameSocket {
   type Result = ();
-  
-  fn handle(&mut self, msg: ServerChat, ctx: &mut Self::Context) -> Self::Result {
-    let ws_message = serde_json::to_string(&msg).unwrap_or(String::from(r#"{ error: "UserSocket: error deserializing" }"#));
-    ctx.text(ws_message);
+
+  fn handle(&mut self, tick: Tick, ctx: &mut Self::Context) -> Self::Result {
+    let message = serde_json::to_string(&tick.0).unwrap_or(String::default());
+    ctx.text(message);
   }
 }
 
-impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for UserSocket {
+impl Handler<UserDisconnect> for GameSocket {
+  type Result = ();
+
+  fn handle(&mut self, _: UserDisconnect, ctx: &mut Self::Context) -> Self::Result {
+    ctx.stop();
+  }
+}
+
+impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for GameSocket {
   fn handle(&mut self, item: Result<ws::Message, ws::ProtocolError>, ctx: &mut Self::Context) {
     let msg = match item {
       Err(_) => {
@@ -88,11 +93,22 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for UserSocket {
 
     match msg {
       ws::Message::Text(text) => {
-        let message: UserChat = match serde_json::from_str(text.to_string().as_str()) {
-          Ok(msg) => msg,
-          Err(e) => return eprintln!("{:#?}", e),
-        };
-        let _ = self.room_addr.do_send(message);
+        let turn_result: Result<Turn, _> = serde_json::from_str(text.to_string().as_str());
+        if let Ok(turn) = turn_result {
+          self.room_addr.do_send(turn);
+          return;
+        }
+        if let Err(error) = turn_result {
+          eprintln!("{error}");
+        }
+
+        let connect_result: Result<PlayerConnect, _> = serde_json::from_str(text.to_string().as_str());
+        if let Ok(connect) = connect_result {
+          self.room_addr.do_send(Player { user_id: self.user_id, selection: connect.selection });
+          return;
+        }
+
+        eprintln!("Game message was not understood");
       }
       ws::Message::Ping(ping_msg) => {
         self.hb = Instant::now();

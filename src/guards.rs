@@ -31,7 +31,7 @@ fn extract_user_from_req(req: &HttpRequest) -> Option<String> {
 
     match decode {
         Ok(token) => {
-            let db_data = db_data.db.lock().unwrap();
+            let db_data = db_data.users.lock().unwrap();
             let user = db_data
                 .iter()
                 .find(|user| user.id == token.claims.sub.to_owned());
@@ -62,7 +62,6 @@ impl FromRequest for AuthenticatedUser {
 pub struct AuthenticationGuard {
     pub user_id: String,
 }
-
 impl FromRequest for AuthenticationGuard {
     type Error = ErrorResponse;
     type Future = Ready<Result<Self, ErrorResponse>>;

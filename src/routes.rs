@@ -1,6 +1,6 @@
 mod ping;
-mod sessions;
 mod rooms;
+pub mod sessions;
 mod users;
 
 use actix_web::web;

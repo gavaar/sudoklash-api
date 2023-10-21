@@ -9,14 +9,14 @@ use crate::{
 };
 
 pub struct AppState {
-  pub db: Arc<Mutex<Vec<User>>>,
+  pub users: Arc<Mutex<Vec<User>>>,
   pub rooms: Arc<Mutex<HashMap<Uuid, Addr<Room>>>>,
   pub env: Environment,
 }
 impl AppState {
   pub fn init() -> AppState {
     AppState {
-      db: Arc::new(Mutex::new(Vec::new())),
+      users: Arc::new(Mutex::new(Vec::new())),
       rooms: Arc::new(Mutex::new(HashMap::new())),
       env: Environment::init(),
     }

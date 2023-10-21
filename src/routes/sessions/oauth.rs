@@ -5,7 +5,7 @@ use crate::{
 };
 
 mod users;
-mod access_token;
+pub mod access_token;
 
 //https://accounts.google.com/o/oauth2/auth?scope=https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email&response_type=code&access_type=offline&redirect_uri=http://localhost:8000/v1/sessions/oauth/google&client_id=921222346302-33pgvo300556qde30v87ot2gqmeikp87.apps.googleusercontent.com
 #[get("/oauth/google")]
@@ -20,7 +20,7 @@ pub async fn google(query: web::Query<GoogleUserQuery>, data: web::Data<AppState
     Err(error) => return error.throw(),
   };
 
-  let user = google_user.to_user(&mut data.db.lock().unwrap());
+  let user = google_user.to_user(&mut data.users.lock().unwrap());
   let token_result = access_token::build(&user.id, &data.env);
 
   match token_result {
