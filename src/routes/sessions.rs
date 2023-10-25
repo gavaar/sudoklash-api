@@ -3,7 +3,11 @@ use actix_web::{
   get, HttpResponse, Responder, web, HttpRequest,
 };
 
-use crate::{guards::AuthenticationGuard, models::User, db::AppState};
+use crate::{
+  guards::AuthenticationGuard,
+  models::auth::User,
+  db::AppState,
+};
 
 mod oauth;
 
@@ -19,8 +23,8 @@ async fn temp_user(_: HttpRequest, data: web::Data<AppState>) -> impl Responder 
       
       println!("token: {:?}, db: {:#?}", token, db_data);
 
-      HttpResponse::Found()
-        .append_header(("token", token))
+      HttpResponse::Ok()
+        .append_header(("sudo_token", token))
         .finish()
     }
   }

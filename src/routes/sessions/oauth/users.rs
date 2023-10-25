@@ -1,8 +1,8 @@
 use reqwest::{Client, Url};
 
-use crate::models::{ErrorResponse, GoogleUserResult};
+use crate::models::{ErrorResponse, GoogleUser};
 
-pub async fn info(access_token: &str, id_token: &str) -> Result<GoogleUserResult, ErrorResponse> {
+pub async fn info(access_token: &str, id_token: &str) -> Result<GoogleUser, ErrorResponse> {
   let client = Client::new();
 
   let mut url = Url::parse("https://www.googleapis.com/oauth2/v1/userinfo").unwrap();
@@ -17,7 +17,7 @@ pub async fn info(access_token: &str, id_token: &str) -> Result<GoogleUserResult
       ErrorResponse::BadGateway("An error occurred while trying to retrieve user information.".to_owned())
     )?;
 
-  response.json::<GoogleUserResult>()
+  response.json::<GoogleUser>()
     .await
     .map_err(|_|
       ErrorResponse::BadGateway("An error occurred while trying to parse user information.".to_owned())

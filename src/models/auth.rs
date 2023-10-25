@@ -1,8 +1,10 @@
-mod google_user_result;
+mod google_user;
+mod user;
 
 use serde::{Serialize, Deserialize};
 
-pub use google_user_result::GoogleUserResult;
+pub use google_user::GoogleUser;
+pub use user::User;
 
 #[derive(Deserialize)]
 pub struct OAuthResponse {

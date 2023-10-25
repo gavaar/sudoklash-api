@@ -3,10 +3,10 @@ use chrono::Utc;
 use serde::Deserialize;
 use uuid::Uuid;
 
-use crate::models::User;
+use crate::models::auth::User;
 
 #[derive(Deserialize)]
-pub struct GoogleUserResult {
+pub struct GoogleUser {
   pub id: String,
   pub email: String,
   pub verified_email: bool,
@@ -15,9 +15,10 @@ pub struct GoogleUserResult {
   pub family_name: String,
   pub picture: String,
 }
-impl GoogleUserResult {
+impl GoogleUser {
   // dbwork: use a real database;
   pub fn to_user<'a>(&self, db_data: &mut MutexGuard<'_, Vec<User>>) -> User {
+    let datetime = Utc::now();
     let email = self.email.to_lowercase();
     let user_result = db_data.iter_mut().find(|user| user.email == email);
 
@@ -26,22 +27,21 @@ impl GoogleUserResult {
 
       if user.name != self.name {
         user.name = self.name.to_owned();
-        updated = Utc::now();
+        updated = datetime;
       }
       if user.email != email {
         user.email = email.to_owned();
-        updated = Utc::now();
+        updated = datetime;
       }
       if user.photo != self.picture {
         user.photo = self.picture.to_owned();
-        updated = Utc::now();
+        updated = datetime;
       }
 
       user.updatedAt = updated;
 
       return user.to_owned();
     } else {
-      let datetime = Utc::now();
       let user_data = User {
         id: Uuid::new_v4().to_string(),
         name: self.name.to_owned(),

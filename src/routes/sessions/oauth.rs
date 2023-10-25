@@ -27,7 +27,7 @@ pub async fn google(query: web::Query<GoogleUserQuery>, data: web::Data<AppState
     Err(e) => e.throw(),
     Ok(token) =>
       HttpResponse::Found()
-        .append_header(("token", token))
+        .append_header(("sudo_token", token))
         .finish(),
   }
 }

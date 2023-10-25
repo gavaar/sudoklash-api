@@ -19,13 +19,14 @@ async fn main() -> std::io::Result<()> {
 
     HttpServer::new(move || {
         let cors = Cors::default()
-            .allowed_origin("http://localhost:3000")
+            .allowed_origin("http://localhost:4200")
             .allowed_methods(vec!["GET", "POST"])
             .allowed_headers(vec![
                 header::CONTENT_TYPE,
                 header::AUTHORIZATION,
                 header::ACCEPT,
             ])
+            .expose_headers(vec!["sudo_token"])
             .supports_credentials();
 
         App::new()

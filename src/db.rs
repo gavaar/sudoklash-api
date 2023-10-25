@@ -4,7 +4,10 @@ use actix::Addr;
 use uuid::Uuid;
 
 use crate::{
-  models::{User, Room},
+  models::{
+    auth::User,
+    Room
+  },
   environment::Environment,
 };
 
