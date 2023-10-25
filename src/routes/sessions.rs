@@ -20,8 +20,6 @@ async fn temp_user(_: HttpRequest, data: web::Data<AppState>) -> impl Responder 
     Err(e) => e.throw(),
     Ok(token) => {
       db_data.push(user);
-      
-      println!("token: {:?}, db: {:#?}", token, db_data);
 
       HttpResponse::Ok()
         .append_header(("sudo_token", token))
@@ -32,15 +30,9 @@ async fn temp_user(_: HttpRequest, data: web::Data<AppState>) -> impl Responder 
 
 #[get("/logout")]
 async fn logout(_: AuthenticationGuard) -> impl Responder {
-  let cookie = Cookie::build("token", "")
-    .path("/")
-    .max_age(ActixWebDuration::new(-1, 0))
-    .http_only(true)
-    .finish();
-
   HttpResponse::Ok()
-    .cookie(cookie)
-    .json(serde_json::json!({"status": "success"}))
+    .append_header(("sudo_token", ""))
+    .finish()
 }
 
 pub fn routes(conf: &mut web::ServiceConfig) {
