@@ -1,5 +1,4 @@
 use actix::prelude::*;
-use uuid::Uuid;
 
 use super::{
   UserChat,
@@ -9,13 +8,14 @@ use super::{
 #[derive(Message)]
 #[rtype(result = "()")]
 pub struct UserDisconnect {
-  pub user_id: Uuid,
+  pub user_id: String,
+  pub username: String,
 }
 impl ToUserChat for UserDisconnect {
   fn to_user_message(&self) -> UserChat {
     UserChat {
-      user_id: self.user_id,
-      message: format!("{} just disconnected...", self.user_id.to_string()),
+      username: self.username.to_owned(),
+      message: format!("{} just disconnected...", self.username.to_string()),
     }
   }
 }

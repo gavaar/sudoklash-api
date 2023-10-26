@@ -28,10 +28,10 @@ impl User {
 
     User {
       id: Uuid::new_v4().to_string(),
-      name: String::from("Hippo"),
+      name: format!("{} {}", POSSIBLE_NAMES.0[rng_points.0], POSSIBLE_NAMES.1[rng_points.1]),
       email: String::new(),
       photo: String::new(),
-      provider: format!("{} {}", POSSIBLE_NAMES.0[rng_points.0], POSSIBLE_NAMES.1[rng_points.1]),
+      provider: String::from("Temp"),
       createdAt: Utc::now(),
       updatedAt: Utc::now(),
     }

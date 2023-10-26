@@ -2,24 +2,23 @@ use std::time::{Instant, Duration};
 
 use actix::prelude::*;
 use actix_web_actors::ws::{WebsocketContext, self};
-use uuid::Uuid;
 
-use super::{messages::{PlayerConnect, Player, UserConnect, Tick, UserDisconnect}, Room, turn::Turn};
+use super::{messages::{PlayerConnect, Player, UserConnect, Tick, UserDisconnect}, Room, turn::Turn, auth::User};
 
 const HEARTBEAT_INTERVAL: Duration = Duration::from_secs(5);
 const CLIENT_TIMEOUT: Duration = Duration::from_secs(10);
 
 // separate game (state) from gamers (socket)
 pub struct GameSocket {
-  user_id: Uuid,
+  user: User,
   room_addr: Addr<Room>,
   hb: Instant,
 }
 
 impl GameSocket {
-  pub fn new(user_id: Uuid, room_addr: Addr<Room>) -> GameSocket {
+  pub fn new(user: User, room_addr: Addr<Room>) -> GameSocket {
     GameSocket {
-      user_id,
+      user,
       room_addr,
       hb: Instant::now(),
     }
@@ -47,11 +46,11 @@ impl Actor for GameSocket {
   fn started(&mut self, ctx: &mut Self::Context) {
     self.hb(ctx);
 
-    let user_id = self.user_id;
+    let user = self.user.to_owned();
     let socket_addr = ctx.address();
 
     self.room_addr
-      .send(UserConnect { user_id, socket_addr })
+      .send(UserConnect { user, socket_addr })
       .into_actor(self)
       .then(|res, _, ctx| {
         match res {
@@ -104,7 +103,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for GameSocket {
 
         let connect_result: Result<PlayerConnect, _> = serde_json::from_str(text.to_string().as_str());
         if let Ok(connect) = connect_result {
-          self.room_addr.do_send(Player { user_id: self.user_id, selection: connect.selection });
+          self.room_addr.do_send(Player { user_id: self.user.id.to_owned(), selection: connect.selection });
           return;
         }
 

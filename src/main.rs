@@ -15,7 +15,7 @@ async fn main() -> std::io::Result<()> {
     let db = db::AppState::init();
     let app_data = web::Data::new(db);
 
-    println!("\n\n🚀 Server started successfully");
+    println!("\n\n🚀 Server started successfully on localhost:8000");
 
     HttpServer::new(move || {
         let cors = Cors::default()

@@ -1,4 +1,5 @@
 use std::future::{ready, Ready};
+use serde::Deserialize;
 use actix_web::{
     dev::Payload,
     http, web, FromRequest, HttpRequest,
@@ -10,39 +11,69 @@ use crate::{
     models::{TokenClaims, ErrorResponse}
 };
 
+fn extract_user_from_token(token: &str, db_data: &web::Data<AppState>) -> Option<String> {
+    let jwt_secret = db_data.env.jwt_secret.to_owned();
+    let decode: Result<jsonwebtoken::TokenData<TokenClaims>, jsonwebtoken::errors::Error> = decode::<TokenClaims>(
+        token,
+        &DecodingKey::from_secret(jwt_secret.as_ref()),
+        &Validation::new(Algorithm::HS256),
+    );
+
+    match decode {
+        Ok(result) => {
+            let db_data = db_data.users.lock().unwrap();
+            let user = db_data
+                .iter()
+                .find(|user| user.id == result.claims.sub.to_owned());
+
+            if let None = user {
+                return None;
+            }
+            
+            Some(result.claims.sub)
+        }
+        Err(_) => None,
+    }
+}
+
 fn extract_user_from_req(req: &HttpRequest) -> Option<String> {
     let token = req.headers()
-    .get(http::header::AUTHORIZATION)
-    .map(|h|
-        h.to_str().unwrap().split_at(7).1.to_owned()
-    );
+        .get(http::header::AUTHORIZATION)
+        .map(|h|
+            h.to_str().unwrap().split_at(7).1.to_owned()
+        );
 
     if let None = token {
         return None;
     }
 
     let db_data: &web::Data<AppState> = req.app_data::<web::Data<AppState>>().unwrap();
-    let jwt_secret = db_data.env.jwt_secret.to_owned();
-    let decode: Result<jsonwebtoken::TokenData<TokenClaims>, jsonwebtoken::errors::Error> = decode::<TokenClaims>(
-        token.unwrap().as_str(),
-        &DecodingKey::from_secret(jwt_secret.as_ref()),
-        &Validation::new(Algorithm::HS256),
-    );
 
-    match decode {
-        Ok(token) => {
-            let db_data = db_data.users.lock().unwrap();
-            let user = db_data
-                .iter()
-                .find(|user| user.id == token.claims.sub.to_owned());
+    extract_user_from_token(token.unwrap().as_str(), db_data)
+}
 
-            if let None = user {
-                return None;
-            }
-            
-            Some(token.claims.sub)
-        }
-        Err(_) => None,
+
+#[derive(Deserialize, Debug)]
+struct QueryParams {
+  token: String,
+}
+
+pub struct UserFromQueryParams {
+    pub user_id: Option<String>,
+    pub req: HttpRequest,
+}
+impl FromRequest for UserFromQueryParams {
+    type Error = ErrorResponse;
+    type Future = Ready<Result<Self, ErrorResponse>>;
+
+    fn from_request(req: &HttpRequest, _: &mut Payload) -> Self::Future {
+        let token = match web::Query::<QueryParams>::from_query(req.query_string()) {
+            Ok(token_response) => token_response.token.to_owned(),
+            Err(_) => return ready(Err(ErrorResponse::BadGateway("Wrong query params".to_string()))),
+        };
+        let db_data: &web::Data<AppState> = req.app_data::<web::Data<AppState>>().unwrap();
+   
+        ready(Ok(UserFromQueryParams { user_id: extract_user_from_token(token.as_str(), db_data), req: req.to_owned() }))
     }
 }
 

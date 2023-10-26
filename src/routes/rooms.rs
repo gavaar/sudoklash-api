@@ -9,7 +9,8 @@ use serde_json::json;
 use uuid::Uuid;
 
 use crate::db::AppState;
-use crate::guards::AuthenticatedUser;
+use crate::guards::UserFromQueryParams;
+use crate::models::auth::User;
 use crate::models::{Room, ErrorResponse, UserSocket, GameSocket};
 
 #[derive(Deserialize, Debug)]
@@ -17,13 +18,13 @@ struct JoinRoomRequest {
   pub room_id: Option<String>
 }
 
-fn user_uuid_from_req(req: &AuthenticatedUser) -> Result<Uuid, ErrorResponse> {
+fn user_uuid_from_req(req: &UserFromQueryParams) -> Result<Uuid, ErrorResponse> {
   let user_id = match &req.user_id {
     Some(id) => match Uuid::parse_str(&id) {
       Ok(uuid) => uuid,
       Err(err) => return Err(ErrorResponse::BadGateway(err.to_string())),
     },
-    None => Uuid::new_v4(),
+    None => return Err(ErrorResponse::Unauthorized(String::from("No token was found from room request"))),
   };
 
   Ok(user_id)
@@ -68,7 +69,7 @@ async fn ping() -> impl Responder {
 }
 
 #[get("/game/{room_id}")]
-async fn game(req: AuthenticatedUser, room_request: Path<JoinRoomRequest>, data: Data<AppState>, stream: Payload) -> Result<HttpResponse, Error> {
+async fn game(req: UserFromQueryParams, room_request: Path<JoinRoomRequest>, data: Data<AppState>, stream: Payload) -> Result<HttpResponse, Error> {
   let join_room = find_or_create_room(&room_request.room_id.to_owned(), &mut data.rooms.lock().unwrap())?;
 
   // todo: to be moved when I use a real db
@@ -76,8 +77,12 @@ async fn game(req: AuthenticatedUser, room_request: Path<JoinRoomRequest>, data:
     Ok(uuid) => uuid,
     Err(err) => return Err(Error::from(err)),
   };
-  
-  let game_socket = GameSocket::new(user_id, join_room);
+  let user: User = match data.users.lock().unwrap().iter().find(|user| user.id == user_id.to_string()) {
+    Some(user) => user.to_owned(),
+    None => return Err(Error::from(ErrorResponse::NotFound("User from request token not found".to_string()))),
+  };
+
+  let game_socket = GameSocket::new(user, join_room);
   let resp = ws::start(game_socket, &req.req, stream);
 
   Ok(resp?)
@@ -86,16 +91,20 @@ async fn game(req: AuthenticatedUser, room_request: Path<JoinRoomRequest>, data:
 #[routes]
 #[get("")]
 #[get("/{room_id}")]
-async fn room(req: AuthenticatedUser, room_request: Path<JoinRoomRequest>, data: Data<AppState>, stream: Payload) -> Result<HttpResponse, Error> {
+async fn room(req: UserFromQueryParams, room_request: Path<JoinRoomRequest>, data: Data<AppState>, stream: Payload) -> Result<HttpResponse, Error> {
   let join_room = find_or_create_room(&room_request.room_id, &mut data.rooms.lock().unwrap())?;
 
-  // todo: to be moved when I use a real db
   let user_id = match user_uuid_from_req(&req) {
     Ok(uuid) => uuid,
     Err(err) => return Err(Error::from(err)),
   };
+  let user: User = match data.users.lock().unwrap().iter().find(|user| user.id == user_id.to_string()) {
+    Some(user) => user.to_owned(),
+    None => return Err(Error::from(ErrorResponse::NotFound("User from request token not found".to_string()))),
+  };
 
-  let user_socket = UserSocket::new(user_id, join_room.to_owned());
+  // todo: to be moved when I use a real db
+  let user_socket = UserSocket::new(user, join_room.to_owned());
   let resp = ws::start(user_socket, &req.req, stream);
 
   Ok(resp?)

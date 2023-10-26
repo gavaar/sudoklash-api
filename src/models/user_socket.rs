@@ -2,25 +2,26 @@ use std::time::{Instant, Duration};
 
 use actix::prelude::*;
 use actix_web_actors::ws;
-use uuid::Uuid;
 
 use crate::models::{
   Room,
   messages::{UserConnect, UserDisconnect, ServerChat, UserChat}
 };
 
+use super::auth::User;
+
 const HEARTBEAT_INTERVAL: Duration = Duration::from_secs(5);
 const CLIENT_TIMEOUT: Duration = Duration::from_secs(10);
 
 pub struct UserSocket {
-  user_id: Uuid,
+  user: User,
   hb: Instant,
   room_addr: Addr<Room>,
 }
 
 impl UserSocket {
-  pub fn new(user_id: Uuid, room_addr: Addr<Room>) -> UserSocket {
-    UserSocket { user_id, hb: Instant::now(), room_addr }
+  pub fn new(user: User, room_addr: Addr<Room>) -> UserSocket {
+    UserSocket { user, room_addr, hb: Instant::now() }
   }
 
   // logic duplicated in game_socket. Extract?
@@ -45,11 +46,11 @@ impl Actor for UserSocket {
   fn started(&mut self, ctx: &mut Self::Context) {
     self.hb(ctx);
 
-    let user_id = self.user_id;
+    let user = self.user.to_owned();
     let socket_addr = ctx.address();
 
     self.room_addr
-      .send(UserConnect { user_id, socket_addr })
+      .send(UserConnect { user, socket_addr })
       .into_actor(self)
       .then(|res, _, ctx| {
         match res {
@@ -62,7 +63,9 @@ impl Actor for UserSocket {
   }
 
   fn stopping(&mut self, _: &mut Self::Context) -> actix::Running {
-    self.room_addr.do_send(UserDisconnect { user_id: self.user_id });
+    let user_id = self.user.id.to_owned();
+    let username = self.user.name.to_owned();
+    self.room_addr.do_send(UserDisconnect { user_id, username });
     Running::Stop
   }
 }

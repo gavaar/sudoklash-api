@@ -1,13 +1,12 @@
 use actix::prelude::*;
 use serde::Deserialize;
-use uuid::Uuid;
 
 use super::traits::{ToUserChat, ToServerChat};
 
 #[derive(Message, Deserialize, Clone)]
 #[rtype(result = "()")]
 pub struct UserChat {
-  pub user_id: Uuid,
+  pub username: String,
   pub message: String,
 }
 impl ToUserChat for UserChat {

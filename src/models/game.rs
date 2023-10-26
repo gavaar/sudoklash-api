@@ -34,9 +34,9 @@ impl Game {
   }
 
   pub fn assing_player(&mut self, player: Player) {
-    if self.players.0.user_id.is_nil() {
+    if self.players.0.user_id.is_empty() {
       self.players.0 = player;
-    } else if self.players.1.user_id.is_nil() {
+    } else if self.players.1.user_id.is_empty() {
       self.players.1 = player;
       self.game_status = GameStatus::Started;
     } else {

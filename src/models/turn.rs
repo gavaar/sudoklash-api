@@ -1,13 +1,12 @@
 use actix::Message;
 use chrono::{DateTime, Utc};
-use uuid::Uuid;
 use serde::{Serialize, Deserialize};
 
 #[derive(Message, Serialize, Deserialize, Clone)]
 #[rtype(result = "()")]
 pub struct Turn {
   pub play: String,
-  pub user_id: Uuid,
+  pub user_id: String,
   // (hit, dead)
   #[serde(skip_deserializing)]
   pub result: (u8, u8),

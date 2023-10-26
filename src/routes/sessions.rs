@@ -1,7 +1,4 @@
-use actix_web::{
-  cookie::{time::Duration as ActixWebDuration, Cookie},
-  get, HttpResponse, Responder, web, HttpRequest,
-};
+use actix_web::{get, HttpResponse, Responder, web, HttpRequest};
 
 use crate::{
   guards::AuthenticationGuard,
