@@ -1,5 +1,5 @@
 mod server_chat;
-mod player_connect;
+mod player;
 mod user_chat;
 mod user_connect;
 mod user_disconnect;
@@ -13,8 +13,8 @@ pub mod traits {
 }
 
 pub use server_chat::ServerChat;
-pub use player_connect::Player;
-pub use player_connect::PlayerConnect;
+pub use player::Player;
+pub use player::PlayerConnect;
 pub use user_chat::UserChat;
 pub use user_connect::UserConnect;
 pub use user_disconnect::UserDisconnect;

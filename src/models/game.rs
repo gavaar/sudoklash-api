@@ -2,6 +2,7 @@ use std::collections::HashSet;
 
 use chrono::Utc;
 use serde::Serialize;
+use uuid::Uuid;
 
 use super::{messages::Player, turn::Turn};
 
@@ -19,7 +20,6 @@ pub struct Game {
   pub game_status: GameStatus,
   // true = self.players.0, false = self.players.1
   pub current_player_turn: bool,
-  #[serde(skip_serializing)]
   pub players: (Player, Player),
 }
 
@@ -34,9 +34,17 @@ impl Game {
   }
 
   pub fn assing_player(&mut self, player: Player) {
-    if self.players.0.user_id.is_empty() {
+    let empty_id = Uuid::nil().to_string();
+
+    if self.players.0.user_id == player.user_id ||
+       self.players.1.user_id == player.user_id {
+      eprintln!("You have already joined!");
+      return;
+    }
+
+    if self.players.0.user_id == empty_id {
       self.players.0 = player;
-    } else if self.players.1.user_id.is_empty() {
+    } else if self.players.1.user_id == empty_id {
       self.players.1 = player;
       self.game_status = GameStatus::Started;
     } else {

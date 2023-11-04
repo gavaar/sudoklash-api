@@ -1,16 +1,17 @@
 use actix::prelude::*;
 use uuid::Uuid;
-use serde::Deserialize;
+use serde::{Serialize, Deserialize};
 
 #[derive(Deserialize)]
 pub struct PlayerConnect {
   pub selection: u16,
 }
 
-#[derive(Message, Debug, Clone)]
+#[derive(Serialize, Message, Debug, Clone)]
 #[rtype(result = "()")]
 pub struct Player {
   pub user_id: String,
+  #[serde(skip_serializing)]
   pub selection: u16,
 }
 impl Player {

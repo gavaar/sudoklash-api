@@ -97,9 +97,6 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for GameSocket {
           self.room_addr.do_send(turn);
           return;
         }
-        if let Err(error) = turn_result {
-          eprintln!("{error}");
-        }
 
         let connect_result: Result<PlayerConnect, _> = serde_json::from_str(text.to_string().as_str());
         if let Ok(connect) = connect_result {
