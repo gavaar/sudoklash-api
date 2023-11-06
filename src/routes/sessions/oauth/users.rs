@@ -1,6 +1,6 @@
 use reqwest::{Client, Url};
 
-use crate::models::{ErrorResponse, GoogleUser};
+use crate::models::{error::ErrorResponse, GoogleUser};
 
 pub async fn info(access_token: &str, id_token: &str) -> Result<GoogleUser, ErrorResponse> {
   let client = Client::new();

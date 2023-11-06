@@ -3,7 +3,11 @@ use std::collections::HashMap;
 use actix::prelude::*;
 use uuid::Uuid;
 
-use super::{messages::{ServerChat, UserDisconnect, UserConnect, UserChat, traits::ToServerChat, Player, Tick}, Game, UserSocket, GameSocket, Turn, GameStatus};
+use super::{
+  ws::{GameSocket, UserSocket},
+  messages::{ServerChat, UserDisconnect, UserConnect, UserChat, traits::ToServerChat, Player, Tick},
+  Game, Turn, GameStatus
+};
 
 pub struct Room {
   pub id: Uuid,

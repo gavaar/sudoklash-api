@@ -1,7 +1,7 @@
 use reqwest::Client;
 
 use crate::{
-  models::{OAuthResponse, ErrorResponse},
+  models::{OAuthResponse, error::ErrorResponse},
   environment::Environment,
 };
 

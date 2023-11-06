@@ -8,6 +8,7 @@ mod db;
 mod environment;
 mod guards;
 mod models;
+mod utils;
 mod routes;
 
 #[actix_web::main]

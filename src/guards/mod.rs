@@ -8,7 +8,7 @@ use jsonwebtoken::{decode, Algorithm, DecodingKey, Validation};
 
 use crate::{
     db::AppState,
-    models::{TokenClaims, ErrorResponse}
+    models::{TokenClaims, error::ErrorResponse}
 };
 
 fn extract_user_from_token(token: &str, db_data: &web::Data<AppState>) -> Option<String> {

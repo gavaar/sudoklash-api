@@ -1,7 +1,7 @@
 use chrono::{Utc, Duration};
 use jsonwebtoken::{Header, EncodingKey, encode};
 
-use crate::{environment::Environment, models::{TokenClaims, ErrorResponse}};
+use crate::{environment::Environment, models::{TokenClaims, error::ErrorResponse}};
 
 pub fn build(user_id: &String, environment: &Environment) -> Result<String, ErrorResponse> {
   let jwt_secret = environment.jwt_secret.to_owned();
