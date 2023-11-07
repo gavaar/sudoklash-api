@@ -2,7 +2,7 @@ use actix::prelude::*;
 
 use super::{
   UserChat,
-  traits::{ToUserChat, ToServerChat}
+  traits::ToServerChat,
 };
 
 #[derive(Message)]
@@ -11,7 +11,7 @@ pub struct UserDisconnect {
   pub user_id: String,
   pub username: String,
 }
-impl ToUserChat for UserDisconnect {
+impl ToServerChat for UserDisconnect {
   fn to_user_message(&self) -> UserChat {
     UserChat {
       username: self.username.to_owned(),
@@ -19,4 +19,3 @@ impl ToUserChat for UserDisconnect {
     }
   }
 }
-impl ToServerChat for UserDisconnect {}

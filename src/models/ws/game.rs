@@ -105,7 +105,13 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for GameSocket {
 
         let connect_result: Result<PlayerConnect, _> = serde_json::from_str(text.to_string().as_str());
         if let Ok(connect) = connect_result {
-          self.room_addr.do_send(Player { user_id: self.user.id.to_owned(), selection: connect.selection });
+          let player = Player {
+            id: self.user.id.to_owned(),
+            avatar: self.user.photo.to_owned(),
+            username: self.user.name.to_owned(),
+            selection: connect.selection,
+          };
+          self.room_addr.do_send(player);
           return;
         }
 

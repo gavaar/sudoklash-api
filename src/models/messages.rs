@@ -6,10 +6,8 @@ mod user_disconnect;
 mod tick;
 pub mod traits {
   mod to_chat_message;
-  mod to_user_message;
 
   pub use to_chat_message::ToServerChat;
-  pub use to_user_message::ToUserChat;
 }
 
 pub use server_chat::ServerChat;

@@ -2,7 +2,6 @@ use std::collections::HashSet;
 
 use chrono::Utc;
 use serde::Serialize;
-use uuid::Uuid;
 
 use super::{messages::Player, turn::Turn};
 
@@ -34,17 +33,15 @@ impl Game {
   }
 
   pub fn assing_player(&mut self, player: Player) {
-    let empty_id = Uuid::nil().to_string();
-
-    if self.players.0.user_id == player.user_id ||
-       self.players.1.user_id == player.user_id {
+    if self.players.0.id == player.id ||
+       self.players.1.id == player.id {
       eprintln!("You have already joined!");
       return;
     }
 
-    if self.players.0.user_id == empty_id {
+    if self.players.0.id.is_empty() {
       self.players.0 = player;
-    } else if self.players.1.user_id == empty_id {
+    } else if self.players.1.id.is_empty() {
       self.players.1 = player;
       self.game_status = GameStatus::Started;
     } else {
@@ -62,7 +59,7 @@ impl Game {
       { (self.players.0.to_owned(), self.players.1.to_owned()) } else
       { (self.players.1.to_owned(), self.players.0.to_owned()) };
 
-    if new_turn.user_id != current_player.user_id {
+    if new_turn.user_id != current_player.id {
       eprintln!("It's not the players turn");
       return;
     }

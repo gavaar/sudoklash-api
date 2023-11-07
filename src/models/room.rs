@@ -2,6 +2,7 @@ use std::collections::HashMap;
 
 use actix::prelude::*;
 use uuid::Uuid;
+use serde::Serialize;
 
 use super::{
   ws::{GameSocket, UserSocket},
@@ -9,11 +10,19 @@ use super::{
   Game, Turn, GameStatus
 };
 
+#[derive(Serialize, Clone, Debug)]
+pub struct RoomUser {
+  id: String,
+  username: String,
+  avatar: String,
+  #[serde(skip_serializing)]
+  addr: Addr<UserSocket>,
+}
+
 pub struct Room {
   pub id: Uuid,
   pub game: Game,
-  pub usernames: HashMap<String, String>,
-  pub users: HashMap<String, Addr<UserSocket>>,
+  pub users: HashMap<String, RoomUser>,
   pub gamers: HashMap<String, Addr<GameSocket>>,
 }
 impl Default for Room {
@@ -21,7 +30,6 @@ impl Default for Room {
     Room {
       id: Uuid::new_v4(),
       game: Game::new(),
-      usernames: HashMap::new(),
       users: HashMap::new(),
       gamers: HashMap::new(),
     }
@@ -66,10 +74,16 @@ impl Handler<UserConnect<UserSocket>> for Room {
   type Result = ();
 
   fn handle(&mut self, user_connect_user_socket: UserConnect<UserSocket>, _: &mut Self::Context) -> Self::Result {
-    self.users.insert(user_connect_user_socket.user.id.to_owned(), user_connect_user_socket.socket_addr.to_owned());
-    self.usernames.insert(user_connect_user_socket.user.id.to_owned(), user_connect_user_socket.user.name.to_owned());
-    let bot_message = user_connect_user_socket.to_chat_message(self, "");
+    let room_user = RoomUser {
+      id: user_connect_user_socket.user.id.to_owned(),
+      avatar: user_connect_user_socket.user.photo.to_owned(),
+      username: user_connect_user_socket.user.name.to_owned(),
+      addr: user_connect_user_socket.socket_addr.to_owned(),
+    };
 
+    self.users.insert(room_user.id.to_owned(), room_user);
+    
+    let bot_message = user_connect_user_socket.to_chat_message(self, "");
     self.send_message(bot_message, None);
   }
 }
@@ -97,7 +111,7 @@ impl Room {
   fn send_message(&self, message: ServerChat, id_to_skip: Option<&String>) {
     self.users.iter().for_each(|user| {
       if Some(user.0) != id_to_skip {
-        let _ = user.1.do_send(message.to_owned());
+        let _ = user.1.addr.do_send(message.to_owned());
       }
     });
   }
@@ -111,7 +125,7 @@ impl Room {
   fn close_game(&self) {
     self.gamers.iter().for_each(|gamer| {
       let user_id = gamer.0;
-      let username = self.usernames.get(user_id).unwrap().to_owned();
+      let username = self.users.get(user_id).unwrap().username.to_owned();
       gamer.1.do_send(UserDisconnect { user_id: user_id.to_owned(), username });
     });
   }
