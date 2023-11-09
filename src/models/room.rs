@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, time::Instant};
 
 use actix::prelude::*;
 use uuid::Uuid;
@@ -17,6 +17,8 @@ pub struct RoomUser {
   avatar: String,
   #[serde(skip_serializing)]
   addr: Addr<UserSocket>,
+  #[serde(skip_serializing)]
+  pub join_date: Instant,
 }
 
 pub struct Room {
@@ -78,6 +80,7 @@ impl Handler<UserConnect<UserSocket>> for Room {
       id: user_connect_user_socket.user.id.to_owned(),
       avatar: user_connect_user_socket.user.photo.to_owned(),
       username: user_connect_user_socket.user.name.to_owned(),
+      join_date: Instant::now(),
       addr: user_connect_user_socket.socket_addr.to_owned(),
     };
 
@@ -93,7 +96,7 @@ impl Handler<UserDisconnect> for Room {
 
   fn handle(&mut self, disconnect_msg: UserDisconnect, _: &mut Self::Context) -> Self::Result {
     if let Some(_user) = self.users.remove(&disconnect_msg.user_id) {
-      let message = disconnect_msg.to_chat_message(self, disconnect_msg.user_id.to_string().as_str());
+      let message = disconnect_msg.to_chat_message(self, "");
       self.send_message(message, Some(&disconnect_msg.user_id));
     }
   }
