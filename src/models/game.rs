@@ -77,7 +77,7 @@ impl Game {
     new_turn.hit_dead_against_selection(enemy_player.selection);
     new_turn.played_at = Utc::now();
 
-    if new_turn.result.0 == 4 {
+    if new_turn.result.1 == 4 {
       self.game_status = GameStatus::Ended;
     }
 

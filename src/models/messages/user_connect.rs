@@ -3,7 +3,7 @@ use actix::prelude::*;
 use crate::models::auth::User;
 
 use super::{
-  UserChat,
+  RoomChat,
   traits::ToServerChat,
 };
 
@@ -14,9 +14,9 @@ pub struct UserConnect<T: Actor> {
   pub socket_addr: Addr<T>,
 }
 impl<T: Actor> ToServerChat for UserConnect<T> {
-  fn to_user_message(&self) -> UserChat {
-    UserChat {
-      username: self.user.name.to_owned(),
+  fn to_user_message(&self) -> RoomChat {
+    RoomChat {
+      user_id: self.user.id.to_owned(),
       message: format!("{} connected!", self.user.name.to_string()),
     }
   }

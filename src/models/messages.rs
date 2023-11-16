@@ -1,6 +1,6 @@
 mod server_chat;
 mod player;
-mod user_chat;
+mod room_chat;
 mod user_connect;
 mod user_disconnect;
 mod tick;
@@ -13,7 +13,7 @@ pub mod traits {
 pub use server_chat::ServerChat;
 pub use player::Player;
 pub use player::PlayerConnect;
-pub use user_chat::UserChat;
+pub use room_chat::RoomChat;
 pub use user_connect::UserConnect;
 pub use user_disconnect::UserDisconnect;
 pub use tick::Tick;

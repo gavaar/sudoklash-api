@@ -6,7 +6,10 @@ use serde::Serialize;
 
 use super::{
   ws::{GameSocket, UserSocket},
-  messages::{ServerChat, UserDisconnect, UserConnect, UserChat, traits::ToServerChat, Player, Tick},
+  messages::{
+    ServerChat, UserDisconnect, UserConnect, RoomChat,
+    traits::ToServerChat, Player, Tick
+  },
   Game, Turn, GameStatus
 };
 
@@ -76,6 +79,11 @@ impl Handler<UserConnect<UserSocket>> for Room {
   type Result = ();
 
   fn handle(&mut self, user_connect_user_socket: UserConnect<UserSocket>, _: &mut Self::Context) -> Self::Result {
+    if self.users.len() > 5 {
+      eprintln!("Room is full");
+      return;
+    }
+
     let room_user = RoomUser {
       id: user_connect_user_socket.user.id.to_owned(),
       avatar: user_connect_user_socket.user.photo.to_owned(),
@@ -86,7 +94,7 @@ impl Handler<UserConnect<UserSocket>> for Room {
 
     self.users.insert(room_user.id.to_owned(), room_user);
     
-    let bot_message = user_connect_user_socket.to_chat_message(self, "");
+    let bot_message = user_connect_user_socket.to_chat_message(self, "_ROOM_");
     self.send_message(bot_message, None);
   }
 }
@@ -96,17 +104,17 @@ impl Handler<UserDisconnect> for Room {
 
   fn handle(&mut self, disconnect_msg: UserDisconnect, _: &mut Self::Context) -> Self::Result {
     if let Some(_user) = self.users.remove(&disconnect_msg.user_id) {
-      let message = disconnect_msg.to_chat_message(self, "");
+      let message = disconnect_msg.to_chat_message(self, "_ROOM_");
       self.send_message(message, Some(&disconnect_msg.user_id));
     }
   }
 }
 
-impl Handler<UserChat> for Room {
+impl Handler<RoomChat> for Room {
   type Result = ();
 
-  fn handle(&mut self, connect_msg: UserChat, _: &mut Self::Context) -> Self::Result {
-    self.send_message(connect_msg.to_chat_message(self, format!("{}: ", &connect_msg.username).as_str()), None);
+  fn handle(&mut self, connect_msg: RoomChat, _: &mut Self::Context) -> Self::Result {
+    self.send_message(connect_msg.to_chat_message(self, &connect_msg.user_id), None);
   }
 }
 

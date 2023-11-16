@@ -2,16 +2,22 @@ use std::time::{Instant, Duration};
 
 use actix::prelude::*;
 use actix_web_actors::ws;
+use serde::Deserialize;
 
 use crate::models::{
   Room,
-  messages::{UserConnect, UserDisconnect, ServerChat, UserChat}
+  messages::{UserConnect, UserDisconnect, ServerChat, RoomChat}
 };
 
 use crate::models::auth::User;
 
 const HEARTBEAT_INTERVAL: Duration = Duration::from_secs(5);
 const CLIENT_TIMEOUT: Duration = Duration::from_secs(10);
+
+#[derive(Deserialize)]
+struct UserMessage {
+  message: String,
+}
 
 pub struct UserSocket {
   user: User,
@@ -91,11 +97,11 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for UserSocket {
 
     match msg {
       ws::Message::Text(text) => {
-        let message: UserChat = match serde_json::from_str(text.to_string().as_str()) {
+        let message: UserMessage = match serde_json::from_str(text.to_string().as_str()) {
           Ok(msg) => msg,
           Err(e) => return eprintln!("{:#?}", e),
         };
-        let _ = self.room_addr.do_send(message);
+        let _ = self.room_addr.do_send(RoomChat { user_id: self.user.id.to_owned(), message: message.message });
       }
       ws::Message::Ping(ping_msg) => {
         self.hb = Instant::now();
